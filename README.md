@@ -23,16 +23,7 @@ Tested with [OrbStack](https://orbstack.dev/) on an M1 Pro MacBook Pro.
 
    At the end of this script, you should see the image in your Docker images: `oracle/database:19.3.0-ee`
 
-1. Check out [this fork](https://github.com/marcelo-ochoa/oci-oracle-free/tree/19c-arm-slim) for the slim fast container
-
-   ```bash
-   git clone -b 19c-arm-slim https://github.com/marcelo-ochoa/oci-oracle-free
-   cd oci-oracle-free
-   ```
-
-   *__Note:__ Make sure to checkout the `19c-arm-slim` branch.*
-
-1. Build the slim version
+1. Now, back to this repository root folder, build the slim version
 
    ```bash
    docker buildx build --build-arg BUILD_MODE=SLIM -t oracle/database:19.3.0-ee-slim -f Dockerfile.193 .
