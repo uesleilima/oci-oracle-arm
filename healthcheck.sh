@@ -24,8 +24,8 @@
 set -Eeuo pipefail
 
 # Check whether PDB is open
-#  Either the PDB passed on as $ORACLE_DATABASE or the default "FREEPDB1"
-DATABASE=${1:-${ORACLE_DATABASE:-FREEPDB1}}
+#  Either the PDB passed on as $ORACLE_DATABASE or the default "XEPDB1"
+DATABASE=${1:-${ORACLE_DATABASE:-XEPDB1}}
 
 db_status=$(sqlplus -s / << EOF
    set heading off;

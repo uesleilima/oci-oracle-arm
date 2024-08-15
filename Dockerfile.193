@@ -18,7 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM oracle/database:19.3.0-ee as builder
+FROM oracle/database:19.3.0-ee AS builder
 
 USER root
 
@@ -64,8 +64,8 @@ ENV ORACLE_BASE=/opt/oracle \
     # Directory for keeping Oracle Wallet
     WALLET_DIR="" \
     ORACLE_PWD=Oracle_2023 \
-    ORACLE_SID=FREE \
-    ORACLE_PDB=FREEPDB1 \
+    ORACLE_SID=XE \
+    ORACLE_PDB=XEPDB1 \
     ALLOCATED_MEMORY=0
 
 ENV PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch/:/usr/sbin:$ORACLE_BASE:$PATH \
@@ -81,7 +81,7 @@ RUN "$INSTALL_DIR"/install.19c.sh "${BUILD_MODE}"
 ### Layer 1 --> Core OS
 ##########################################################################################
 
-FROM oraclelinux:8-slim as os_layer
+FROM oraclelinux:8-slim AS os_layer
 
 # Redefine environment variables, etc. as we copied everything from an empty image (scratch)
 ENV ORACLE_BASE=/opt/oracle \
@@ -120,8 +120,8 @@ ENV ORACLE_BASE=/opt/oracle \
     # Directory for keeping Oracle Wallet
     WALLET_DIR="" \
     ORACLE_PWD=Oracle_2023 \
-    ORACLE_SID=FREE \
-    ORACLE_PDB=FREEPDB1 \
+    ORACLE_SID=XE \
+    ORACLE_PDB=XEPDB1 \
     ALLOCATED_MEMORY=0
 
 ENV PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch/:/usr/sbin:$ORACLE_BASE:$PATH \
@@ -142,10 +142,10 @@ RUN mkdir -p "$ORACLE_BASE"/scripts/setup && \
     chown -R oracle:dba "$ORACLE_BASE"
 
 ##########################################################################################
-### Layer 2 --> Oracle Home without bin/oracle, lib, rdbms, and FREE.7z
+### Layer 2 --> Oracle Home without bin/oracle, lib, rdbms, and XE.7z
 ##########################################################################################
 
-FROM os_layer as oracle_home
+FROM os_layer AS oracle_home
 
 COPY --from=builder --chown=oracle:oinstall "${ORACLE_BASE}" "${ORACLE_BASE}"
 
@@ -159,7 +159,7 @@ RUN rm    "${ORACLE_BASE}"/"${ORACLE_SID}".7z
 ### Layer 3 --> Oracle binary (bin/oracle)
 ##########################################################################################
 
-FROM oracle_home as oracle_binary
+FROM oracle_home AS oracle_binary
 
 COPY --from=builder --chown=oracle:oinstall "${ORACLE_HOME}"/bin/oracle "${ORACLE_HOME}"/bin/oracle
 
@@ -167,7 +167,7 @@ COPY --from=builder --chown=oracle:oinstall "${ORACLE_HOME}"/bin/oracle "${ORACL
 ### Layer 4 --> Oracle lib
 ##########################################################################################
 
-FROM oracle_binary as oracle_lib
+FROM oracle_binary AS oracle_lib
 
 COPY --from=builder --chown=oracle:oinstall "${ORACLE_HOME}"/lib "${ORACLE_HOME}"/lib
 
@@ -175,7 +175,7 @@ COPY --from=builder --chown=oracle:oinstall "${ORACLE_HOME}"/lib "${ORACLE_HOME}
 ### Layer 5 --> Oracle lib
 ##########################################################################################
 
-FROM oracle_lib as oracle_rdbms
+FROM oracle_lib AS oracle_rdbms
 
 COPY --from=builder --chown=oracle:oinstall "${ORACLE_HOME}"/rdbms "${ORACLE_HOME}"/rdbms
 
@@ -183,17 +183,17 @@ COPY --from=builder --chown=oracle:oinstall "${ORACLE_HOME}"/rdbms "${ORACLE_HOM
 ### Layer 6 --> Oracle (compressed) db files
 ##########################################################################################
 
-FROM oracle_rdbms as db_files
+FROM oracle_rdbms AS db_files
 
 COPY --from=builder --chown=oracle:oinstall "${ORACLE_BASE}"/"${ORACLE_SID}".7z  "${ORACLE_BASE}"/
 COPY --from=builder --chown=oracle:oinstall /etc/oratab /etc/oratab
 
-LABEL org.opencontainers.image.source https://github.com/marcelo-ochoa/oci-oracle-free
+LABEL org.opencontainers.image.source=https://github.com/marcelo-ochoa/oci-oracle-free
 
 USER oracle
 WORKDIR $ORACLE_BASE
 
-RUN echo 'ORACLE_SID=${ORACLE_SID:-FREE}; export ORACLE_SID=${ORACLE_SID^^}' > .bashrc
+RUN echo 'ORACLE_SID=${ORACLE_SID:-XE}; export ORACLE_SID=${ORACLE_SID^^}' > .bashrc
 
 HEALTHCHECK CMD "${ORACLE_BASE}"/healthcheck.sh >/dev/null || exit 1
 
